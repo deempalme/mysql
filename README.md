@@ -1,3 +1,5 @@
+# MySQL helper library
+
 ## Installing MySQL
 
 Download the source files from [mysql githubs's page](https://github.com/mysql/mysql-connector-cpp.git) and uncompress them, after that execute the following commands:
