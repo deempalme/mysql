@@ -1,7 +1,9 @@
-#include "ramrod/connection.h"
+#include "ramrod/mysql/connection.h"
 
 #include <mysql_driver.h>
 #include <mysql_connection.h>
+
+#include "ramrod/mysql/statement.h"
 
 namespace ramrod::mysql {
   connection::connection() :
@@ -78,13 +80,18 @@ namespace ramrod::mysql {
     return connection_ != nullptr && connection_->isValid();
   }
 
-  sql::Statement *connection::create_statement(){
+  ramrod::mysql::statement connection::create_statement(){
     if(connection_ == nullptr) return nullptr;
-    return connection_->createStatement();
+    return ramrod::mysql::statement(connection_);
   }
 
-  sql::Statement *connection::init_statement(){
-    return create_statement();
+  sql::Connection *connection::get_connection(){
+    return connection_;
+  }
+
+  ramrod::mysql::statement connection::init_statement(){
+    if(connection_ == nullptr) return nullptr;
+    return ramrod::mysql::statement(connection_);
   }
 
   bool connection::is_valid(){
@@ -124,4 +131,4 @@ namespace ramrod::mysql {
   bool connection::select_db(const std::string &database){
     return schema(database);
   }
-} // namespace ramrod
+} // namespace ramrod::mysql

@@ -1,5 +1,5 @@
-#ifndef RAMROD_CONNECTION_H
-#define RAMROD_CONNECTION_H
+#ifndef RAMROD_MYSQL_CONNECTION_H
+#define RAMROD_MYSQL_CONNECTION_H
 
 #include <string>
 #include <cppconn/connection.h>
@@ -11,6 +11,8 @@ namespace sql {
 }
 
 namespace ramrod::mysql {
+  class statement;
+
   class connection
   {
   public:
@@ -92,11 +94,12 @@ namespace ramrod::mysql {
      *
      * @return An statement object or `nullptr` if the connection is closed or error with driver
      */
-    sql::Statement *create_statement();
+    ramrod::mysql::statement create_statement();
+    sql::Connection *get_connection();
     /**
      * @brief Alias of create_statement()
      */
-    sql::Statement *init_statement();
+    ramrod::mysql::statement init_statement();
     /**
      * @brief Indicates if the connection is valid
      *
@@ -155,6 +158,6 @@ namespace ramrod::mysql {
     sql::Connection *connection_;
     sql::ConnectOptionsMap options_;
   };
-} // namespace ramrod
+} // namespace ramrod::mysql
 
-#endif // RAMROD_CONNECTION_H
+#endif // RAMROD_MYSQL_CONNECTION_H

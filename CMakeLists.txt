@@ -16,13 +16,19 @@ find_package(mysqlx REQUIRED)
 
 #header files
 set(HPP_FILES
-  include/ramrod/connection.h
+  include/ramrod/mysql/connection.h
+  include/ramrod/mysql/result.h
+  include/ramrod/mysql/statement.h
+  include/ramrod/mysql/warning.h
 )
 
 #source files
 set(CPP_FILES
   src/main.cpp
-  src/ramrod/connection.cpp
+  src/ramrod/mysql/connection.cpp
+  src/ramrod/mysql/result.cpp
+  src/ramrod/mysql/statement.cpp
+  src/ramrod/mysql/warning.cpp
 )
 
 #add every file to the executable
