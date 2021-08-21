@@ -2,6 +2,7 @@
 #define RAMROD_CONNECTION_H
 
 #include <string>
+#include <cppconn/connection.h>
 
 namespace sql {
   class Connection;
@@ -10,7 +11,7 @@ namespace sql {
   }
 }
 
-namespace ramrod {
+namespace ramrod::mysql {
   class connection
   {
   public:
@@ -28,6 +29,8 @@ namespace ramrod {
      * @return `true` on success or `false` on failure.
      */
     bool close();
+    // TODO: is this feasible?
+    bool closed();
     /**
      * @brief Open a new connection to the MySQL server
      *
@@ -62,11 +65,58 @@ namespace ramrod {
                  const std::string &database = "",
                  const int port = -1, const std::string &socket = "");
 
-    int error_code();
+    bool options(const int );
+
+    bool reconnect();
+    /**
+     * @brief Obtaining the default database for database queries
+     *
+     * @return  The database name.
+     */
+    std::string schema();
+    /**
+     * @brief Selects the default database for database queries
+     *
+     * Selects the default database to be used when performing queries against the
+     * database connection.
+     *
+     *    Note: This function should only be used to change the default database for the
+     *    connection. You can select the default database with 4th parameter in connect().
+     *
+     * @param database The database name.
+     *
+     * @return `true` on success or `false` on failure.
+     */
+    bool schema(const std::string &schema);
+    /**
+     * @brief Selects the default database for database queries
+     *
+     * Selects the default database to be used when performing queries against the
+     * database connection.
+     *
+     *    Note: This function should only be used to change the default database for the
+     *    connection. You can select the default database with 4th parameter in connect().
+     *
+     * @param database The database name.
+     *
+     * @return `true` on success or `false` on failure.
+     */
+    bool select_db(const std::string &database);
+    /**
+     * @brief Sets the client character set
+     *
+     * Sets the character set to be used when sending data from and to the database server.
+     *
+     * @param charset The desired character set.
+     *
+     * @return `true` on success or `false` on failure.
+     */
+    bool set_charset(const std::string &charset);
 
   private:
     sql::mysql::MySQL_Driver *driver_;
     sql::Connection *connection_;
+    sql::ConnectOptionsMap options_;
   };
 } // namespace ramrod
 
