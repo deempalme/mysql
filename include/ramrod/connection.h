@@ -5,7 +5,6 @@
 #include <cppconn/connection.h>
 
 namespace sql {
-  class Connection;
   namespace mysql {
     class MySQL_Driver;
   }
@@ -29,8 +28,32 @@ namespace ramrod::mysql {
      * @return `true` on success or `false` on failure.
      */
     bool close();
-    // TODO: is this feasible?
+    /**
+     * @brief Indicates if the connection is closed
+     *
+     * @return `true` if is closed or never opened, `false` otherwise
+     */
     bool closed();
+    /**
+     * @brief Obtaining the client character set
+     *
+     * @return String containing the current client character set
+     */
+    std::string charset();
+    /**
+     * @brief Sets the client character set
+     *
+     * Sets the character set to be used when sending data from and to the database server.
+     * NOTE: it must be done before connecting, if done after, you need to connect again
+     * using reconnect()
+     *
+     * @param charset   The desired character set.
+     * @param reconnect It will automatically close the connection and open it again
+     *
+     * @return `true` on success or `false` if you need to reload the connection
+     *          using reconnect() or connection was never opened.
+     */
+    bool charset(const std::string &charset, const bool reconnect = false);
     /**
      * @brief Open a new connection to the MySQL server
      *
@@ -64,9 +87,43 @@ namespace ramrod::mysql {
                  const std::string &password = "",
                  const std::string &database = "",
                  const int port = -1, const std::string &socket = "");
+    /**
+     * @brief  Initializes a statement and returns an object
+     *
+     * @return An statement object or `nullptr` if the connection is closed or error with driver
+     */
+    sql::Statement *create_statement();
+    /**
+     * @brief Alias of create_statement()
+     */
+    sql::Statement *init_statement();
+    /**
+     * @brief Indicates if the connection is valid
+     *
+     * @return `true` if the connection is valid, `false` if is invalid or connection not opened
+     */
+    bool is_valid();
 
     bool options(const int );
-
+    /**
+     * @brief Indicates if the database is read only
+     *
+     * @return `true` if read only or connection not opened, `false` if is writable
+     */
+    bool read_only();
+    /**
+     * @brief Making the database read only or writable
+     *
+     * @param set_read_only `true` to make read only, `false` otherwise
+     *
+     * @return `true` on success, `false` if the connection is closed or error with driver
+     */
+    bool read_only(const bool set_read_only);
+    /**
+     * @brief Reconnects if the connection has gone down
+     *
+     * @return `true` on success, `false` if the connection is closed or error with driver
+     */
     bool reconnect();
     /**
      * @brief Obtaining the default database for database queries
@@ -89,29 +146,9 @@ namespace ramrod::mysql {
      */
     bool schema(const std::string &schema);
     /**
-     * @brief Selects the default database for database queries
-     *
-     * Selects the default database to be used when performing queries against the
-     * database connection.
-     *
-     *    Note: This function should only be used to change the default database for the
-     *    connection. You can select the default database with 4th parameter in connect().
-     *
-     * @param database The database name.
-     *
-     * @return `true` on success or `false` on failure.
+     * @brief Alias of schema(const std::string&)
      */
     bool select_db(const std::string &database);
-    /**
-     * @brief Sets the client character set
-     *
-     * Sets the character set to be used when sending data from and to the database server.
-     *
-     * @param charset The desired character set.
-     *
-     * @return `true` on success or `false` on failure.
-     */
-    bool set_charset(const std::string &charset);
 
   private:
     sql::mysql::MySQL_Driver *driver_;

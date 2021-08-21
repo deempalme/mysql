@@ -27,33 +27,87 @@ namespace ramrod::mysql {
     return connection_->isClosed();
   }
 
+  std::string connection::charset(){
+    if(connection_ == nullptr) return std::string();
+    return connection_->getClientOption("OPT_CHARSET_NAME").asStdString();
+  }
+
+  bool connection::charset(const std::string &charset, const bool reconnect){
+    if(charset.size() > 0)
+      options_["OPT_CHARSET_NAME"] = charset;
+    else
+      options_.erase(options_.find("OPT_CHARSET_NAME"));
+
+    if(reconnect && connection_ != nullptr)
+      return this->reconnect();
+
+    return connection_ != nullptr;
+  }
+
   bool connection::connect(const std::string &hostname, const std::string &username,
                            const std::string &password, const std::string &database,
                            const int port, const std::string &socket){
     if(driver_ == nullptr) return false;
     if(connection_ != nullptr) close();
 
-    options_.clear();
     options_["hostName"] = hostname;
     options_["userName"] = username;
+
     if(password.size() > 0)
       options_["password"] = password;
+    else
+      options_.erase(options_.find("password"));
+
     if(port >= 0)
       options_["port"] = port;
+    else
+      options_.erase(options_.find("port"));
+
     if(socket.size() > 0)
       options_["socket"] = socket;
+    else
+      options_.erase(options_.find("socket"));
+
     if(database.size() > 0)
       options_["schema"] = database;
+    else
+      options_.erase(options_.find("schema"));
 
     connection_ = driver_->connect(options_);
 
     return connection_ != nullptr && connection_->isValid();
   }
 
+  sql::Statement *connection::create_statement(){
+    if(connection_ == nullptr) return nullptr;
+    return connection_->createStatement();
+  }
+
+  sql::Statement *connection::init_statement(){
+    return create_statement();
+  }
+
+  bool connection::is_valid(){
+    if(connection_ == nullptr) return false;
+    return connection_->isValid();
+  }
+
+  bool connection::read_only(){
+    if(connection_ == nullptr) return true;
+    return connection_->isReadOnly();
+  }
+
+  bool connection::read_only(const bool set_read_only){
+    if(connection_ == nullptr) return false;
+    connection_->setReadOnly(set_read_only);
+    return true;
+  }
+
   bool connection::reconnect(){
     if(connection_ == nullptr) return false;
-    connection_->reconnect();
-    return connection_->isValid();
+    close();
+    connection_ = driver_->connect(options_);
+    return connection_ != nullptr && connection_->isValid();
   }
 
   std::string connection::schema(){
@@ -69,11 +123,5 @@ namespace ramrod::mysql {
 
   bool connection::select_db(const std::string &database){
     return schema(database);
-  }
-
-  bool connection::set_charset(const std::string &charset){
-    if(connection_ == nullptr) return false;
-    // TODO: how to do it?
-    return true;
   }
 } // namespace ramrod
