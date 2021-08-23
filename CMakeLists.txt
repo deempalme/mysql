@@ -1,9 +1,9 @@
 ﻿#cmake version
 cmake_minimum_required(VERSION 3.5...3.15)
 
-project(MySQL_helper
+project(MySQL_wrapper
   VERSION 1.0.0
-  DESCRIPTION "MySQL and MySQLx helper library"
+  DESCRIPTION "MySQL and MySQLx php-styled library"
   LANGUAGES CXX C
 )
 
@@ -11,14 +11,17 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # mysql libraries
 find_package(mysql REQUIRED)
-find_package(mysqlx REQUIRED)
+#find_package(mysqlx REQUIRED)
 
 
 #header files
 set(HPP_FILES
   include/ramrod/mysql/connection.h
+  include/ramrod/mysql/param.h
+  include/ramrod/mysql/parameter.h
   include/ramrod/mysql/result.h
   include/ramrod/mysql/statement.h
+  include/ramrod/mysql/types.h
   include/ramrod/mysql/warning.h
 )
 
@@ -26,6 +29,8 @@ set(HPP_FILES
 set(CPP_FILES
   src/main.cpp
   src/ramrod/mysql/connection.cpp
+  src/ramrod/mysql/param.cpp
+  src/ramrod/mysql/parameter.cpp
   src/ramrod/mysql/result.cpp
   src/ramrod/mysql/statement.cpp
   src/ramrod/mysql/warning.cpp
@@ -58,8 +63,6 @@ target_include_directories(${PROJECT_NAME}
 
 #indicates which libraries to use in the executable
 target_link_libraries(${PROJECT_NAME}
-  -lssl
-  -lcrypto
   ${mysql_LIBRARIES}
   ${mysqlx_LIBRARIES}
 )
