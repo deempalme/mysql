@@ -15,7 +15,7 @@ else (mysql_LIBRARIES AND mysql_INCLUDE_DIR)
     DOC "Specify the directory containing mysql.h."
   )
 
-  find_library(mysql_LIBRARY
+  find_library(mysql_LIBMYSQL
     NAMES mysql libmysql mysqlclient
     PATHS
       /usr/lib
@@ -26,6 +26,17 @@ else (mysql_LIBRARIES AND mysql_INCLUDE_DIR)
     DOC "Specify the mysql library here."
   )
 
+  find_library(mysql_LIBCPPCONN
+    NAMES mysqlcppconn libmysqlcppconn
+    PATHS
+      /usr/lib
+      /usr/lib/mysql
+      /usr/local/lib
+      /usr/local/lib/mysql
+      /usr/local/mysql/lib
+    DOC "Specify the cppconn mysql library here."
+  )
+
   find_library(mysql_EXTRA_LIBRARIES
     NAMES z zlib
     PATHS
@@ -33,14 +44,15 @@ else (mysql_LIBRARIES AND mysql_INCLUDE_DIR)
       /usr/local/lib
     DOC "If more libraries are necessary to link in a MySQL client, specify them here.")
 
-  if (mysql_LIBRARY)
+  if (mysql_LIBMYSQL AND mysql_LIBCPPCONN)
     set(mysql_FOUND TRUE)
   endif()
 
   if (mysql_FOUND)
     set(mysql_INCLUDE_DIRS ${mysql_INCLUDE_DIR})
     set(mysql_LIBRARIES
-      ${mysql_LIBRARY}
+      ${mysql_LIBMYSQL}
+      ${mysql_LIBCPPCONN}
       #${mysql_EXTRA_LIBRARIES}
     )
   endif (mysql_FOUND)
