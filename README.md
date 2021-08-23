@@ -1,6 +1,15 @@
 # MySQL helper library
 
-## Installing MySQL
+## Installing MySQL libraries
+
+```sh
+# Installing mysql's development client library
+sudo apt install libmysqlclient-dev
+# Installing mysql's cppconn development library
+sudo apt install libmysqlcppconn-dev
+```
+
+## Installing MySQL X dev API
 
 Download the source files from [mysql githubs's page](https://github.com/mysql/mysql-connector-cpp.git) and uncompress them, after that execute the following commands:
 
