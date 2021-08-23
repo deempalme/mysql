@@ -4,20 +4,32 @@
 #include <mysql_connection.h>
 
 #include "ramrod/mysql/connection.h"
+#include "ramrod/mysql/parameter.h"
 
 namespace ramrod::mysql {
   statement::statement(ramrod::mysql::connection *connection) :
-    connection_{connection->get_connection()},
+    ramrod::mysql::parameter(this),
+    connection_{nullptr},
     statement_{nullptr},
     affected_rows_{0},
     insert_id_{-1},
-    num_rows_{0},
-    param_result_{false},
-    param_types_(),
-    param_counter_{0}
+    num_rows_{0}
   {
+    if(connection != nullptr) connection_ = (sql::Connection*)connection;
     if(connection_ != nullptr)
-      statement_ = connection_->prepareStatement("");
+      statement_ = (sql::PreparedStatement*)connection_->createStatement();
+  }
+
+  statement::statement(ramrod::mysql::connection *connection, const std::string &sql) :
+    ramrod::mysql::parameter(this),
+    connection_{nullptr},
+    statement_{nullptr},
+    affected_rows_{0},
+    insert_id_{-1},
+    num_rows_{0}
+  {
+    if(connection != nullptr) connection_ = (sql::Connection*)connection;
+    prepare(sql);
   }
 
   statement::~statement(){
@@ -29,19 +41,6 @@ namespace ramrod::mysql {
   }
 
   template<typename ...T>
-  bool statement::bind_param(const std::string &types, T &...vars){
-    if(statement_ == nullptr || types.size() <= 0) return false;
-
-    // TODO: check if this is called more than once per call
-    clear_parameters();
-    param_types_ = types;
-
-    bind_parameter(vars...);
-
-    return param_result_;
-  }
-
-  template<typename ...T>
   bool statement::bind_result(T &...vars){
     if(statement_ == nullptr) return false;
 
@@ -50,6 +49,7 @@ namespace ramrod::mysql {
 
   bool statement::close(){
     if(statement_ == nullptr) return false;
+    clear_parameters();
     delete statement_;
     statement_ = nullptr;
     return true;
@@ -57,6 +57,8 @@ namespace ramrod::mysql {
 
   bool statement::execute(){
     if(statement_ == nullptr) return false;
+
+    update_param();
     if(!statement_->execute()) return false;
 
     affected_rows_ = statement_->getUpdateCount();
@@ -66,11 +68,25 @@ namespace ramrod::mysql {
 
   bool statement::execute(const std::string &query){
     if(statement_ == nullptr) return false;
+
+    clear_parameters();
     if(!statement_->execute(query)) return false;
 
     affected_rows_ = statement_->getUpdateCount();
     num_rows_ = statement_->getMaxRows();
     return true;
+  }
+
+  int statement::execute_update(){
+    if(statement_ == nullptr) return 0;
+    update_param();
+    return affected_rows_ = statement_->executeUpdate();
+  }
+
+  int statement::execute_update(const std::string &query){
+    if(statement_ == nullptr) return 0;
+    clear_parameters();
+    return affected_rows_ = statement_->executeUpdate(query);
   }
 
   bool statement::fetch(){
@@ -92,6 +108,7 @@ namespace ramrod::mysql {
 
   bool statement::prepare(const std::string &query){
     if(statement_ != nullptr) return false;
+    close();
     statement_ = connection_->prepareStatement(query);
     return statement_ != nullptr;
   }
@@ -100,75 +117,7 @@ namespace ramrod::mysql {
     close();
   }
 
-  // ::::::::::::::::::::::::::::::::::: PRIVATE FUNCTIONS ::::::::::::::::::::::::::::::::::
-
-  void statement::bind_parameter(){
-    param_result_ = (param_counter_ + 1) != param_types_.size();
+  ramrod::mysql::statement::operator sql::PreparedStatement*(){
+    return statement_;
   }
-
-  void statement::bind_parameter(bool &value){
-    if(exit_param()) return;
-    statement_->setBoolean(param_counter_++, value);
-  }
-
-  void statement::bind_parameter(double &value){
-    if(exit_param()) return;
-    statement_->setDouble(param_counter_++, value);
-  }
-
-  void statement::bind_parameter(float &value){
-    if(exit_param()) return;
-    statement_->setDouble(param_counter_++, (double)value);
-  }
-
-  void statement::bind_parameter(std::int32_t &value){
-    if(exit_param()) return;
-    statement_->setInt(param_counter_++, value);
-  }
-
-  void statement::bind_parameter(std::int64_t &value){
-    if(exit_param()) return;
-    statement_->setInt64(param_counter_++, value);
-  }
-
-  void statement::bind_parameter(std::istream &blob){
-    if(exit_param()) return;
-    statement_->setBlob(param_counter_++, &blob);
-  }
-
-  void statement::bind_parameter(std::string &value){
-    if(exit_param()) return;
-    statement_->setString(param_counter_++, value);
-  }
-
-  void statement::bind_parameter(std::uint32_t &value){
-    if(exit_param()) return;
-    statement_->setUInt(param_counter_++, value);
-  }
-
-  void statement::bind_parameter(std::uint64_t &value){
-    if(exit_param()) return;
-    statement_->setUInt64(param_counter_++, value);
-  }
-
-  void statement::clear_parameters(){
-    if(statement_ == nullptr) return;
-    param_counter_ = 0;
-    param_types_.clear();
-    statement_->clearParameters();
-  }
-
-  void statement::error_param(){
-
-  }
-
-  bool statement::exit_param(){
-    if(statement_ == nullptr) return true;
-    if((param_counter_ + 1) >= param_types_.size()){
-      error_param();
-      return true;
-    }
-    return false;
-  }
-
 } // namespace ramrod::mysql

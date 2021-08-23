@@ -7,10 +7,9 @@
 
 namespace ramrod::mysql {
   result::result(ramrod::mysql::connection *connection) :
-    connection_{connection->get_connection()},
-    row_count_{0}
+    connection_{nullptr}
   {
-
+    if(connection != nullptr) connection_ = (sql::Connection*)connection;
   }
 
   result::~result(){
@@ -18,11 +17,13 @@ namespace ramrod::mysql {
   }
 
   void result::after_last(){
-
+    if(result_ == nullptr) return;
+    result_->afterLast();
   }
 
   void result::before_fisrt(){
-
+    if(result_ == nullptr) return;
+    result_->beforeFirst();
   }
 
   bool result::close(){
@@ -33,12 +34,12 @@ namespace ramrod::mysql {
   }
 
   bool result::fetch(){
-    if(result_ == nullptr) return false;
-    return result_->next();
+    return next();
   }
 
   bool result::first(){
-
+    if(result_ == nullptr) return false;
+    return result_->first();
   }
 
   bool result::free(){
@@ -132,12 +133,43 @@ namespace ramrod::mysql {
     return result_->getString(label);
   }
 
+  bool result::last(){
+    if(result_ == nullptr) return false;
+    return result_->last();
+  }
+
+  bool result::next(){
+    if(result_ == nullptr) return false;
+    return result_->next();
+  }
+
   std::size_t result::num_rows(){
-    return row_count_;
+    return row_count();
+  }
+
+  bool result::previous(){
+    if(result_ == nullptr) return false;
+    return result_->previous();
   }
 
   std::size_t result::row_count(){
-    return row_count_;
+    if(result_ == nullptr) return 0;
+    return result_->rowsCount();
+  }
+
+  bool result::row_deleted(){
+    if(result_ == nullptr) return false;
+    return result_->rowDeleted();
+  }
+
+  bool result::row_inserted(){
+    if(result_ == nullptr) return false;
+    return result_->rowInserted();
+  }
+
+  bool result::row_updated(){
+    if(result_ == nullptr) return false;
+    return result_->rowUpdated();
   }
 
 } // namespace ramrod::mysql

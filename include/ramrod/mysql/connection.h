@@ -11,12 +11,49 @@ namespace sql {
 }
 
 namespace ramrod::mysql {
+  class result;
   class statement;
 
   class connection
   {
   public:
     connection();
+    /**
+     * @brief Open a new connection to the MySQL server
+     *
+     * Check if the connection is valid and active by using is_valid()
+     *
+     * @param hostname Can be either a host name or an IP address. The local host is assumed
+     *                 when passing the null value or the string "localhost" to this
+     *                 parameter. When possible, pipes will be used instead of the TCP/IP
+     *                 protocol. The TCP/IP protocol is used if a host name and port number
+     *                 are provided together e.g. localhost:3308.
+     *
+     *                 Prepending host by p: opens a persistent connection.
+     *                 mysqli_change_user() is automatically called on connections opened
+     *                 from the connection pool.
+     * @param username The MySQL user name.
+     * @param password If not provided or null, the MySQL server will attempt to authenticate
+     *                 the user against those user records which have no password only. This
+     *                 allows one username to be used with different permissions (depending
+     *                 on if a password is provided or not).
+     * @param database If provided will specify the default database to be used when
+     *                 performing queries.
+     * @param port     Specifies the port number to attempt to connect to the MySQL server.
+     * @param socket   Specifies the socket or named pipe that should be used.
+     *                    Note: Specifying the socket parameter will not explicitly determine
+     *                          the type of connection to be used when connecting to the MySQL
+     *                          server. How the connection is made to the MySQL database is
+     *                          determined by the hostname parameter.
+     */
+    connection(const std::string &hostname,
+               const std::string &username,
+               const std::string &password = "",
+               const std::string &database = "",
+               const int port = -1, const std::string &socket = "");
+    /**
+      * @brief Closes the connection and frees used memory
+      */
     ~connection();
     /**
      * @brief Closes a previously opened database connection
@@ -95,7 +132,6 @@ namespace ramrod::mysql {
      * @return An statement object or `nullptr` if the connection is closed or error with driver
      */
     ramrod::mysql::statement create_statement();
-    sql::Connection *get_connection();
     /**
      * @brief Alias of create_statement()
      */
@@ -108,6 +144,53 @@ namespace ramrod::mysql {
     bool is_valid();
 
     bool options(const int );
+    /**
+     * @brief Prepares an SQL statement for execution
+     *
+     *  Prepares the SQL query, and returns a statement handle to be used for further
+     *  operations on the statement. The query must consist of a single SQL statement.
+     *
+     *  The statement template can contain zero or more question mark (?) parameter
+     *  markers⁠—also called placeholders. The parameter markers must be bound to
+     *  application variables using `bind_param()` before executing the statement.
+     *
+     * @param sql  The query, as a string. It must consist of a single SQL statement.
+     *
+     *             The SQL statement may contain zero or more parameter markers represented
+     *             by question mark (?) characters at the appropriate positions.
+     *
+     *             Note: The markers are legal only in certain places in SQL statements.
+     *             For example, they are permitted in the `VALUES()` list of an `INSERT`
+     *             statement (to specify column values for a row), or in a comparison
+     *             with a column in a `WHERE` clause to specify a comparison value.
+     *
+     *             However, they are not permitted for identifiers (such as table or
+     *             column names), or to specify both operands of a binary operator such
+     *             as the = equal sign. The latter restriction is necessary because it
+     *             would be impossible to determine the parameter type. In general,
+     *             parameters are legal only in Data Manipulation Language (DML)
+     *             statements, and not in Data Definition Language (DDL) statements.
+     *
+     * @return A statement object
+     */
+    ramrod::mysql::statement prepare(const std::string &sql);
+    /**
+     * @brief Performs a query on the database
+     *
+     * Performs a query against the database.
+     *
+     * @param query The query string.
+     *
+     *              ## Warning
+     *              ### Security warning: SQL injection
+     *
+     *              If the query contains any variable input then parameterized prepared
+     *              statements should be used instead. Alternatively, the data must be
+     *              properly formatted and all strings must be escaped.
+     *
+     * @return A result object
+     */
+    ramrod::mysql::result query(const std::string &query);
     /**
      * @brief Indicates if the database is read only
      *
@@ -152,6 +235,8 @@ namespace ramrod::mysql {
      * @brief Alias of schema(const std::string&)
      */
     bool select_db(const std::string &database);
+
+    operator sql::Connection*();
 
   private:
     sql::mysql::MySQL_Driver *driver_;

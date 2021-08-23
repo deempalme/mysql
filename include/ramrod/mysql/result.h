@@ -62,12 +62,15 @@ namespace ramrod::mysql {
 
     std::size_t row_count();
 
+    bool row_deleted();
+    bool row_inserted();
+    bool row_updated();
+
   private:
     sql::Connection *connection_;
     sql::ResultSet *result_;
 
     std::uint32_t field_count_;
-    std::size_t row_count_;
   };
 } // namespace ramrod::mysql
 
