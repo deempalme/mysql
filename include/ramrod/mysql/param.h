@@ -11,7 +11,9 @@ namespace ramrod::mysql {
   {
   public:
     param(const ramrod::mysql::types type, void *variable);
-    ~param();
+
+    ramrod::mysql::types type() const;
+    void *value() const;
 
   private:
     ramrod::mysql::types type_;

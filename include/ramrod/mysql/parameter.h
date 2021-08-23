@@ -8,6 +8,7 @@
 
 #include<mysql/field_types.h>
 
+#include "ramrod/mysql/param.h"
 #include "ramrod/mysql/types.h"
 
 namespace sql { class PreparedStatement; }
@@ -21,7 +22,7 @@ namespace ramrod::mysql {
   {
   public:
     parameter(ramrod::mysql::statement *statement);
-    virtual ~parameter() = 0;
+    virtual ~parameter();
     /**
      * @param types
      *              b = bool
@@ -70,9 +71,10 @@ namespace ramrod::mysql {
     void bind_parameter(std::uint32_t &value);
     void bind_parameter(std::uint64_t &value);
 
-    void error_param(const mysql::error::code code);
-    bool exit_param();
+    void cast_back(const mysql::index index, const mysql::types type, void *value);
 
+    void error_param(const mysql::error::code code);
+    bool exit_param(const char type);
     bool param_set(const unsigned int index);
 
     sql::PreparedStatement *statement_;
