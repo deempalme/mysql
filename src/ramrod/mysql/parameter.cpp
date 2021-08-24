@@ -1,11 +1,14 @@
 #include "ramrod/mysql/parameter.h"
 
-#include <istream>
-#include <string>
-#include <cppconn/prepared_statement.h>
+#include <cppconn/prepared_statement.h>       // for PreparedStatement
+#include <cstdio>                             // for perror
+#include <istream>                            // for istream
+#include <string>                             // for string
+#include <utility>                            // for pair
+#include "ramrod/mysql/parameter_metadata.h"  // for parameter_metadata
+#include "ramrod/mysql/statement.h"           // for statement
 
-#include "ramrod/mysql/parameter_metadata.h"
-#include "ramrod/mysql/statement.h"
+namespace sql { class ParameterMetaData; }
 
 
 namespace ramrod::mysql {
@@ -14,31 +17,19 @@ namespace ramrod::mysql {
     metadata_{new mysql::parameter_metadata()},
     param_error_{false},
     param_in_{false},
+    param_break_{false},
     param_types_(),
     param_counter_{0},
+    param_step_{0},
     param_total_{0},
     param_vars_()
   {
     if(statement != nullptr)
-      statement_ = (sql::PreparedStatement*)statement;
+      statement_ = static_cast<sql::PreparedStatement*>(*statement);
   }
 
   parameter::~parameter(){
     delete metadata_;
-  }
-
-  template<typename ...T>
-  bool parameter::bind_param(const std::string &types, T &...variables){
-    if(statement_ == nullptr || types.size() <= 0) return false;
-
-    // TODO: check if this is called more than once per call
-    clear_parameters();
-    param_types_ = types;
-
-    // TODO: see std::forward
-    bind_parameter(variables...);
-
-    return !param_error_;
   }
 
   void parameter::clear_parameters(){
@@ -137,7 +128,7 @@ namespace ramrod::mysql {
 
   void parameter::update_metadata(){
     if(statement_ == nullptr)
-      *metadata_ = (sql::ParameterMetaData*)nullptr;
+      *metadata_ = static_cast<sql::ParameterMetaData*>(nullptr);
     else
       *metadata_ = statement_->getParameterMetaData();
     param_total_ = metadata_->parameter_count();
@@ -151,16 +142,13 @@ namespace ramrod::mysql {
 
   // ::::::::::::::::::::::::::::::::::: PRIVATE FUNCTIONS ::::::::::::::::::::::::::::::::::
 
-  void parameter::bind_parameter(){
-    if(param_counter_ != param_types_.size()){
-      clear_parameters();
+  bool parameter::bind_param(const std::string &/*types*/){
+    param_step_ = 0;
+    if(param_counter_ != param_types_.size())
       error_param(mysql::error::param_count_error);
-      param_error_ = true;
-    }else if(static_cast<unsigned int>(param_total_) != param_counter_){
-      clear_parameters();
+    else if(static_cast<unsigned int>(param_total_) != param_counter_)
       error_param(mysql::error::param_count_match_error);
-      param_error_ = true;
-    }
+    return !param_error_;
   }
 
   void parameter::bind_parameter(bool &value){
@@ -182,7 +170,7 @@ namespace ramrod::mysql {
   }
 
   void parameter::bind_parameter(std::int32_t &value){
-    if(exit_param('i') && exit_param('n')) return;
+    if(exit_param('i', 'n')) return;
     if(param_types_[param_counter_] == 'i'){
       statement_->setInt(++param_counter_, value);
       param_vars_.emplace(param_counter_, mysql::param(mysql::types::int32, (void*)&value));
@@ -204,8 +192,8 @@ namespace ramrod::mysql {
     param_vars_.emplace(param_counter_, mysql::param(mysql::types::blob, (void*)&blob));
   }
 
-  void parameter::bind_parameter(const std::string &value){
-    if(exit_param('s') && exit_param('I') && exit_param('t')) return;
+  void parameter::bind_parameter(std::string &value){
+    if(exit_param('s', 'I', 't')) return;
 
     if(param_types_[param_counter_] == 's'){
       statement_->setString(++param_counter_, value);
@@ -229,6 +217,11 @@ namespace ramrod::mysql {
     if(exit_param('U')) return;
     statement_->setUInt64(++param_counter_, value);
     param_vars_.emplace(param_counter_, mysql::param(mysql::types::uint64, (void*)&value));
+  }
+
+  template<typename T>
+  void parameter::bind_parameter(T &/*value*/){
+    error_param(error::param_type_error);
   }
 
   void parameter::cast_back(const mysql::index index, const mysql::types type, void *value){
@@ -274,10 +267,16 @@ namespace ramrod::mysql {
   }
 
   void parameter::error_param(const mysql::error::code code){
+    clear_parameters();
+    param_error_ = true;
+    param_break_ = true;
     // TODO: throw error
     switch(code){
       case error::code::no_statement:
         std::perror("MySQL Error: The statement is no open");
+      break;
+      case error::code::param_no_types:
+        std::perror("MySQL Error: you did not defined the types");
       break;
       case error::code::param_count_error:
         std::perror("MySQL Error: the number of types does not match the number of parameters");
@@ -286,14 +285,18 @@ namespace ramrod::mysql {
         std::perror("MySQL Error: the number of parameters does not match the total "
                     "number in the SQL statement");
       break;
-      case error::code::param_type_error:
+      case error::code::param_diff_type_error:
         std::perror("MySQL Error: Selected a different type for a variable");
+      break;
+      case error::code::param_type_error:
+        std::perror("MySQL Error: Selected a non-valid type");
       break;
       default: break;
     }
   }
 
-  bool parameter::exit_param(const char type){
+  bool parameter::exit_param(const char type, const char type_2, const char type_3){
+    ++param_step_;
     if(statement_ == nullptr){
       error_param(error::no_statement);
       return true;
@@ -303,8 +306,9 @@ namespace ramrod::mysql {
     }else if(static_cast<int>(param_counter_ + 1) > param_total_){
       error_param(error::param_count_match_error);
       return true;
-    }else if(param_types_[param_counter_] != type){
-      error_param(error::param_type_error);
+    }else if(param_types_[param_counter_] != type && param_types_[param_counter_] != type_2
+             && param_types_[param_counter_] != type_3){
+      error_param(error::param_diff_type_error);
       return true;
     }
     return false;
@@ -318,5 +322,11 @@ namespace ramrod::mysql {
     }
     param_in_ = true;
     return true;
+  }
+
+  void parameter::set_types(const std::string &types){
+    if(param_step_ != 0) return;
+    clear_parameters();
+    param_types_ = types;
   }
 } // namespace ramrod::mysql

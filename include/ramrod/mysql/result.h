@@ -1,16 +1,15 @@
 #ifndef RAMROD_MYSQL_RESULT_H
 #define RAMROD_MYSQL_RESULT_H
 
-#include <cstdint>
-#include <iostream>
-
-#include "ramrod/mysql/result_metadata.h"
+#include <cstdint>                         // for uint32_t, int32_t, int64_t
+#include <iostream>                        // for size_t, istream
+#include <string>                          // for string
+#include "ramrod/mysql/result_metadata.h"  // for result_metadata
 
 namespace sql { class ResultSet; }
 
-namespace ramrod::mysql {
-  class result_metadata;
 
+namespace ramrod::mysql {
   class result
   {
   public:

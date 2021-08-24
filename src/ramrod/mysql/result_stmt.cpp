@@ -1,39 +1,37 @@
 #include "ramrod/mysql/result_stmt.h"
 
-#include <cppconn/resultset.h>
+#include <cppconn/resultset.h>             // for ResultSet
+#include <cppconn/sqlstring.h>             // for SQLString
+#include <cstdio>                          // for perror
+#include <utility>                         // for pair
+#include "ramrod/mysql/result.h"           // for result
+#include "ramrod/mysql/result_metadata.h"  // for result_metadata
 
-#include "ramrod/mysql/result_metadata.h"
+namespace sql { class ResultSetMetaData; }
+
 
 namespace ramrod::mysql {
   result_stmt::result_stmt(ramrod::mysql::result *result) :
     result_{nullptr},
     metadata_{new mysql::result_metadata()},
     result_error_{false},
+    result_break_{true},
+    result_step_{0},
     result_counter_{0},
     result_total_{0},
     result_vars_()
   {
-    if(result != nullptr)
-      result_ = (sql::ResultSet*)result;
+    if(result != nullptr) result_ = static_cast<sql::ResultSet*>(*result);
   }
 
   result_stmt::~result_stmt(){
     delete metadata_;
   }
 
-  template<typename ...T>
-  bool result_stmt::bind_result(T &...variables){
-    if(result_ == nullptr) return false;
-
-    clear_results();
-
-    bind_results(variables...);
-
-    return !result_error_;
-  }
-
   void result_stmt::clear_results(){
     result_error_ = false;
+    result_break_ = false;
+    result_step_ = 0;
     result_counter_ = 0;
     result_vars_.clear();
   }
@@ -53,7 +51,7 @@ namespace ramrod::mysql {
   void result_stmt::update_metadata(sql::ResultSet *new_result){
     result_ = new_result;
     if(result_ == nullptr)
-      *metadata_ = (sql::ResultSetMetaData*)nullptr;
+      *metadata_ = static_cast<sql::ResultSetMetaData*>(nullptr);
     else
       *metadata_ = result_->getMetaData();
     result_total_ = metadata_->column_count();
@@ -61,56 +59,61 @@ namespace ramrod::mysql {
 
   // ::::::::::::::::::::::::::::::::::: PRIVATE FUNCTIONS ::::::::::::::::::::::::::::::::::
 
-  void result_stmt::bind_results(){
-    if(result_total_ != result_counter_){
+  bool result_stmt::bind_result(){
+    result_step_ = 0;
+    if(result_total_ != result_counter_)
       error_result(mysql::error::result_count_match_error);
-      result_error_ = true;
-    }
+    return !result_error_;
   }
 
-  void result_stmt::bind_results(bool &value){
+  void result_stmt::bind_single_result(bool &value){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::boolean, (void*)&value));
   }
 
-  void result_stmt::bind_results(long double &value){
+  void result_stmt::bind_single_result(long double &value){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::double64, (void*)&value));
   }
 
-  void result_stmt::bind_results(float &value){
+  void result_stmt::bind_single_result(float &value){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::float32, (void*)&value));
   }
 
-  void result_stmt::bind_results(std::int32_t &value){
+  void result_stmt::bind_single_result(std::int32_t &value){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::int32, (void*)&value));
   }
 
-  void result_stmt::bind_results(std::int64_t &value){
+  void result_stmt::bind_single_result(std::int64_t &value){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::int64, (void*)&value));
   }
 
-  void result_stmt::bind_results(std::istream &blob){
+  void result_stmt::bind_single_result(std::istream &blob){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::blob, (void*)&blob));
   }
 
-  void result_stmt::bind_results(const std::string &value){
+  void result_stmt::bind_single_result(std::string &value){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::string, (void*)&value));
   }
 
-  void result_stmt::bind_results(std::uint32_t &value){
+  void result_stmt::bind_single_result(std::uint32_t &value){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::uint32, (void*)&value));
   }
 
-  void result_stmt::bind_results(std::uint64_t &value){
+  void result_stmt::bind_single_result(std::uint64_t &value){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::uint64, (void*)&value));
+  }
+
+  template<typename T>
+  void result_stmt::bind_single_result(T &/*value*/){
+    error_result(error::code::result_type_error);
   }
 
   void result_stmt::cast_back(const mysql::index index, const mysql::types type, void *value){
@@ -147,6 +150,9 @@ namespace ramrod::mysql {
   }
 
   void result_stmt::error_result(const error::code code){
+    clear_results();
+    result_error_ = true;
+    result_break_ = true;
     // TODO: throw error
     switch(code){
       case error::code::no_result:
@@ -156,16 +162,21 @@ namespace ramrod::mysql {
         std::perror("MySQL Error: the number of result bindings does not match "
                     "the number of columns in the obtained row");
       break;
+      case error::code::result_type_error:
+        std::perror("MySQL Error: the selected type is not compatible");
+      break;
       default: break;
     }
   }
 
   bool result_stmt::exit_result(){
+    if(result_step_ == 0) clear_results();
+    ++result_step_;
     if(result_ == nullptr){
       error_result(error::no_result);
       return true;
     }else if((result_counter_ + 1) > result_total_){
-      error_result(error::param_count_match_error);
+      error_result(error::result_count_match_error);
       return true;
     }
     return false;
