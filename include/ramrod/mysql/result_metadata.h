@@ -65,8 +65,8 @@ namespace ramrod::mysql {
 
     bool is_zerofill(unsigned int column);
 
-    ramrod::mysql::result_metadata &operator()(sql::ResultSetMetaData *result_metadata);
-    ramrod::mysql::result_metadata &operator=(sql::ResultSetMetaData *result_metadata);
+    ramrod::mysql::result_metadata &operator()(sql::ResultSetMetaData *metadata);
+    ramrod::mysql::result_metadata &operator=(sql::ResultSetMetaData *metadata);
     operator sql::ResultSetMetaData*();
 
   private:

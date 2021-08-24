@@ -11,14 +11,12 @@
 #include "ramrod/mysql/param.h"
 #include "ramrod/mysql/types.h"
 
-namespace sql {
-  class ParameterMetaData;
-  class PreparedStatement;
-}
+namespace sql { class PreparedStatement; }
 
 
 namespace ramrod::mysql {
   class param;
+  class parameter_metadata;
   class statement;
 
   class parameter
@@ -27,26 +25,49 @@ namespace ramrod::mysql {
     parameter(ramrod::mysql::statement *statement);
     virtual ~parameter();
     /**
-     * @param types
-     *              b = bool
-     *              B = blob
-     *              d = double
-     *              f = float
-     *              i = int32
-     *              I = big int
-     *              l = int64
-     *              n = null
-     *              s = string
-     *              t = datetime
-     *              u = uint32
-     *              U = uint64
+     * @brief Binds variables to a prepared statement as parameters
+     *
+     * Bind variables for the parameter markers in the SQL statement prepared by `prepare()`
+     *
+     * @param types Defines the types for each variable, the number of variables must be
+     *              equal to the number of characters in `types`.
+     *                Available types:
+     *                  b = bool
+     *                  B = blob
+     *                  d = double
+     *                  f = float
+     *                  i = int32
+     *                  I = big int
+     *                  l = int64
+     *                  n = null
+     *                  s = string
+     *                  t = datetime
+     *                  u = uint32
+     *                  U = uint64
+     * @param variables Variables that will be binded to a parameter, the number of
+     *                  variables must be equal to the number of parameters from
+     *                  `param_count()`
+     *                    Accepted types:
+     *                      bool
+     *                      std::istream (for: blob)
+     *                      double
+     *                      float
+     *                      std::int32_t (for: int and null)
+     *                      std::int64_t
+     *                      std::uint32_t
+     *                      std::uint64_t
+     *                      std::string (for: string, datetime, big int)
+     *
+     * @return `false` if the number of parameters is not the adecuate
      */
     template<typename ...T>
-    bool bind_param(const std::string &types, T &...vars);
+    bool bind_param(const std::string &types, T &...variables);
 
     void clear_parameters();
 
-    unsigned int param_count();
+    ramrod::mysql::parameter_metadata &get_parameter_metadata();
+
+    int param_count();
 
     parameter &set_big_int(const unsigned int index, const std::string &value);
     parameter &set_datetime(const unsigned int index, const std::string &value);
@@ -63,6 +84,8 @@ namespace ramrod::mysql {
 
   protected:
     void update_param();
+    void update_metadata();
+    void update_statement(sql::PreparedStatement *new_statement);
 
   private:
     void bind_parameter();
@@ -83,11 +106,12 @@ namespace ramrod::mysql {
     bool param_set(const unsigned int index);
 
     sql::PreparedStatement *statement_;
-    sql::ParameterMetaData *parameters_;
+    ramrod::mysql::parameter_metadata *metadata_;
 
-    bool param_result_, param_in_;
+    bool param_error_, param_in_;
     std::string param_types_;
     unsigned int param_counter_;
+    int param_total_;
     std::map<const mysql::index, mysql::param> param_vars_;
   };
 } // namespace ramrod::mysql

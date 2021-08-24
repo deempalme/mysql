@@ -25,7 +25,10 @@ namespace ramrod::mysql {
       driver_not_found = 1,
       no_statement,
       param_count_error,
-      param_type_error
+      param_count_match_error,
+      param_type_error,
+      no_result,
+      result_count_match_error
     };
   }
 } // namespace ramrod::mysql

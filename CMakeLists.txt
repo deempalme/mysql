@@ -19,6 +19,7 @@ set(HPP_FILES
   include/ramrod/mysql/connection.h
   include/ramrod/mysql/param.h
   include/ramrod/mysql/parameter.h
+  include/ramrod/mysql/parameter_metadata.h
   include/ramrod/mysql/result.h
   include/ramrod/mysql/result_metadata.h
   include/ramrod/mysql/result_stmt.h
@@ -33,6 +34,7 @@ set(CPP_FILES
   src/ramrod/mysql/connection.cpp
   src/ramrod/mysql/param.cpp
   src/ramrod/mysql/parameter.cpp
+  src/ramrod/mysql/parameter_metadata.cpp
   src/ramrod/mysql/result.cpp
   src/ramrod/mysql/result_metadata.cpp
   src/ramrod/mysql/result_stmt.cpp

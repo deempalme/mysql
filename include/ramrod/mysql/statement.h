@@ -7,6 +7,7 @@
 #include <cppconn/prepared_statement.h>
 
 #include "ramrod/mysql/parameter.h"
+#include "ramrod/mysql/result_stmt.h"
 #include "ramrod/mysql/types.h"
 
 
@@ -15,7 +16,7 @@ namespace ramrod::mysql {
   class result;
   class result_metadata;
 
-  class statement : public ramrod::mysql::parameter
+  class statement : public ramrod::mysql::parameter, public ramrod::mysql::result_stmt
   {
   public:
     statement(ramrod::mysql::connection *connection);
@@ -23,6 +24,9 @@ namespace ramrod::mysql {
     ~statement();
 
     std::uint64_t affected_rows();
+
+    void after_last();
+    void before_first();
 
     bool close();
 
@@ -35,15 +39,28 @@ namespace ramrod::mysql {
 
     bool fetch();
 
+    bool first();
+
     bool free_result();
 
     ramrod::mysql::result &get_result();
 
     std::int64_t insert_id();
 
+    bool is_after_last();
+    bool is_before_first();
+    bool is_first();
+    bool is_last();
+
+    bool last();
+
+    bool next();
+
     std::size_t num_rows();
 
     bool prepare(const std::string &query);
+
+    bool previous();
 
     void reset();
 
@@ -53,12 +70,10 @@ namespace ramrod::mysql {
     sql::Connection *connection_;
     sql::PreparedStatement *statement_;
     ramrod::mysql::result *result_;
-    ramrod::mysql::result_metadata *metadata_;
 
     std::uint64_t affected_rows_;
     std::int64_t insert_id_;
     std::size_t num_rows_;
-    std::size_t field_count_;
   };
 } // namespace ramrod::mysql
 

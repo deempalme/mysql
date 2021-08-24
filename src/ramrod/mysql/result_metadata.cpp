@@ -15,6 +15,8 @@ namespace ramrod::mysql {
 
   result_metadata::result_metadata(sql::ResultSetMetaData *result) : meta_{result}{}
 
+  result_metadata::~result_metadata(){}
+
   std::string result_metadata::catalog_name(unsigned int column){
     if(meta_ == nullptr) return std::string();
     return meta_->getCatalogName(column);
@@ -135,13 +137,13 @@ namespace ramrod::mysql {
     return meta_->isZerofill(column);
   }
 
-  result_metadata& result_metadata::operator()(sql::ResultSetMetaData *result_metadata){
-    meta_ = result_metadata;
+  result_metadata& result_metadata::operator()(sql::ResultSetMetaData *metadata){
+    meta_ = metadata;
     return *this;
   }
 
-  result_metadata& result_metadata::operator=(sql::ResultSetMetaData *result_metadata){
-    meta_ = result_metadata;
+  result_metadata& result_metadata::operator=(sql::ResultSetMetaData *metadata){
+    meta_ = metadata;
     return *this;
   }
 

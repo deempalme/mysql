@@ -49,6 +49,9 @@ namespace ramrod::mysql {
     std::uint32_t get_uint(const std::string &label) const;
     std::uint64_t get_uint64(const std::uint32_t index) const;
     std::uint64_t get_uint64(const std::string &label) const;
+
+    std::size_t get_row();
+
     std::string get_string(const std::uint32_t index) const;
     std::string get_string(const std::string &label) const;
 
@@ -71,11 +74,15 @@ namespace ramrod::mysql {
 
     bool previous();
 
+    void refresh_row();
+
     std::size_t rows_count();
 
     bool row_deleted();
     bool row_inserted();
     bool row_updated();
+
+    bool was_null();
 
     ramrod::mysql::result &operator()(sql::ResultSet *result);
     ramrod::mysql::result &operator=(sql::ResultSet *result);
@@ -86,8 +93,6 @@ namespace ramrod::mysql {
   private:
     sql::ResultSet *result_;
     ramrod::mysql::result_metadata metadata_;
-
-    std::uint32_t field_count_;
   };
 } // namespace ramrod::mysql
 
