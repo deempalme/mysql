@@ -1,11 +1,11 @@
 #include "ramrod/mysql/connection.h"
 
-#include <mysql_driver.h>
-#include <mysql_connection.h>
+#include <cppconn/sqlstring.h>       // for SQLString
+#include <mysql_driver.h>            // for get_driver_instance, MySQL_Driver
+#include <map>                       // for map<>::mapped_type
+#include "ramrod/mysql/result.h"     // for result
+#include "ramrod/mysql/statement.h"  // for statement
 
-#include "ramrod/mysql/statement.h"
-#include "ramrod/mysql/result.h"
-#include "ramrod/mysql/types.h"
 
 namespace ramrod::mysql {
   connection::connection() :

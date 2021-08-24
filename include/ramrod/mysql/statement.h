@@ -1,20 +1,21 @@
 #ifndef RAMROD_MYSQL_STATEMENT_H
 #define RAMROD_MYSQL_STATEMENT_H
 
-#include <cstdint>
-#include <string>
-#include <cppconn/resultset.h>
-#include <cppconn/prepared_statement.h>
+#include <cstdint>                     // for int64_t
+#include <iosfwd>                      // for size_t
+#include <string>                      // for string
+#include "ramrod/mysql/parameter.h"    // for parameter
+#include "ramrod/mysql/result_stmt.h"  // for result_stmt
 
-#include "ramrod/mysql/parameter.h"
-#include "ramrod/mysql/result_stmt.h"
-#include "ramrod/mysql/types.h"
+namespace sql {
+  class Connection;
+  class PreparedStatement;
+}
 
 
 namespace ramrod::mysql {
   class connection;
   class result;
-  class result_metadata;
 
   class statement : public ramrod::mysql::parameter, public ramrod::mysql::result_stmt
   {
@@ -23,7 +24,7 @@ namespace ramrod::mysql {
     statement(ramrod::mysql::connection *connection, const std::string &sql);
     ~statement();
 
-    std::uint64_t affected_rows();
+    std::size_t affected_rows();
 
     void after_last();
     void before_first();
@@ -71,7 +72,7 @@ namespace ramrod::mysql {
     sql::PreparedStatement *statement_;
     ramrod::mysql::result *result_;
 
-    std::uint64_t affected_rows_;
+    int affected_rows_;
     std::int64_t insert_id_;
     std::size_t num_rows_;
   };

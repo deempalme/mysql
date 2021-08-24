@@ -1,7 +1,5 @@
 #include "ramrod/mysql/param.h"
 
-#include <istream>
-#include <string>
 
 namespace ramrod::mysql {
   param::param(const ramrod::mysql::types type, void *variable) :

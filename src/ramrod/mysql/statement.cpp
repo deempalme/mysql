@@ -1,11 +1,12 @@
 #include "ramrod/mysql/statement.h"
 
-#include <cstdarg>
-#include <mysql_connection.h>
+#include <cppconn/connection.h>          // for Connection
+#include <cppconn/prepared_statement.h>  // for PreparedStatement
+#include "ramrod/mysql/connection.h"     // for connection
+#include "ramrod/mysql/result.h"         // for result
 
-#include "ramrod/mysql/connection.h"
-#include "ramrod/mysql/result.h"
-#include "ramrod/mysql/result_metadata.h"
+namespace sql { class ResultSet; }
+
 
 namespace ramrod::mysql {
   statement::statement(ramrod::mysql::connection *connection) :
@@ -18,9 +19,7 @@ namespace ramrod::mysql {
     insert_id_{-1},
     num_rows_{0}
   {
-    if(connection != nullptr) connection_ = (sql::Connection*)connection;
-    if(connection_ != nullptr)
-      statement_ = (sql::PreparedStatement*)connection_->createStatement();
+    if(connection != nullptr) connection_ = static_cast<sql::Connection*>(*connection);
   }
 
   statement::statement(ramrod::mysql::connection *connection, const std::string &sql) :
@@ -33,7 +32,7 @@ namespace ramrod::mysql {
     insert_id_{-1},
     num_rows_{0}
   {
-    if(connection != nullptr) connection_ = (sql::Connection*)connection;
+    if(connection != nullptr) connection_ = static_cast<sql::Connection*>(*connection);
     prepare(sql);
   }
 
@@ -42,8 +41,8 @@ namespace ramrod::mysql {
     close();
   }
 
-  std::uint64_t statement::affected_rows(){
-    return affected_rows_;
+  std::size_t statement::affected_rows(){
+    return num_rows_;
   }
 
   void statement::after_last(){
@@ -72,9 +71,8 @@ namespace ramrod::mysql {
     if(!statement_->execute()) return false;
     *result_ = statement_->getResultSet();
     mysql::parameter::update_metadata();
-    mysql::result_stmt::update_metadata((sql::ResultSet*)result_);
+    mysql::result_stmt::update_metadata(static_cast<sql::ResultSet*>(*result_));
 
-    affected_rows_ = statement_->getUpdateCount();
     num_rows_ = result_->num_rows();
     return true;
   }
@@ -87,9 +85,8 @@ namespace ramrod::mysql {
     if(!statement_->execute(query)) return false;
     *result_ = statement_->getResultSet();
     mysql::parameter::update_metadata();
-    mysql::result_stmt::update_metadata((sql::ResultSet*)result_);
+    mysql::result_stmt::update_metadata(static_cast<sql::ResultSet*>(*result_));
 
-    affected_rows_ = statement_->getUpdateCount();
     num_rows_ = result_->num_rows();
     return true;
   }
@@ -106,7 +103,7 @@ namespace ramrod::mysql {
     affected_rows_ = statement_->executeUpdate();
     *result_ = statement_->getResultSet();
     mysql::parameter::update_metadata();
-    mysql::result_stmt::update_metadata((sql::ResultSet*)result_);
+    mysql::result_stmt::update_metadata(static_cast<sql::ResultSet*>(*result_));
 
     num_rows_ = result_->num_rows();
     return affected_rows_;
@@ -119,7 +116,7 @@ namespace ramrod::mysql {
     affected_rows_ = statement_->executeUpdate(query);
     *result_ = statement_->getResultSet();
     mysql::parameter::update_metadata();
-    mysql::result_stmt::update_metadata((sql::ResultSet*)result_);
+    mysql::result_stmt::update_metadata(static_cast<sql::ResultSet*>(*result_));
 
     num_rows_ = result_->num_rows();
     return affected_rows_;
@@ -188,10 +185,9 @@ namespace ramrod::mysql {
   }
 
   bool statement::prepare(const std::string &query){
-    if(statement_ != nullptr) return false;
     close();
     statement_ = connection_->prepareStatement(query);
-    mysql::parameter::update_statement((sql::PreparedStatement*)statement_);
+    mysql::parameter::update_statement(statement_);
     mysql::result_stmt::update_metadata(nullptr);
     return statement_ != nullptr;
   }

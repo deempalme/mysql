@@ -1,14 +1,10 @@
 #ifndef RAMROD_MYSQL_CONNECTION_H
 #define RAMROD_MYSQL_CONNECTION_H
 
-#include <string>
-#include <cppconn/connection.h>
+#include <cppconn/connection.h>  // for Connection (ptr only), ConnectOption...
+#include <string>                // for string, allocator
 
-namespace sql {
-  namespace mysql {
-    class MySQL_Driver;
-  }
-}
+namespace sql::mysql { class MySQL_Driver; }
 
 namespace ramrod::mysql {
   class result;

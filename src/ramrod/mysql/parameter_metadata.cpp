@@ -1,6 +1,8 @@
 #include "ramrod/mysql/parameter_metadata.h"
 
-#include <cppconn/parameter_metadata.h>
+#include <cppconn/parameter_metadata.h>  // for ParameterMetaData
+#include <cppconn/sqlstring.h>           // for SQLString
+
 
 namespace ramrod::mysql {
   parameter_metadata::parameter_metadata() : meta_{nullptr}{}

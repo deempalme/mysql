@@ -1,8 +1,9 @@
 #include "ramrod/mysql/result_metadata.h"
 
-#include <cppconn/resultset.h>
-#include <cppconn/resultset_metadata.h>
-#include "ramrod/mysql/result.h"
+#include <cppconn/resultset.h>           // for ResultSet
+#include <cppconn/resultset_metadata.h>  // for ResultSetMetaData
+#include <cppconn/sqlstring.h>           // for SQLString
+
 
 namespace ramrod::mysql {
   result_metadata::result_metadata() : meta_{nullptr}{}

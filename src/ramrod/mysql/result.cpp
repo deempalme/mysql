@@ -1,7 +1,7 @@
 #include "ramrod/mysql/result.h"
 
-#include <mysql_connection.h>
-#include <cppconn/resultset.h>
+#include <cppconn/resultset.h>  // for ResultSet
+#include <cppconn/sqlstring.h>  // for SQLString
 
 
 namespace ramrod::mysql {
@@ -32,7 +32,8 @@ namespace ramrod::mysql {
   bool result::close(){
     if(result_ == nullptr) return false;
     metadata_(nullptr);
-    delete result_;
+    // TODO: delete required?
+//    delete result_;
     result_ = nullptr;
     return true;
   }
@@ -243,13 +244,16 @@ namespace ramrod::mysql {
 
   ramrod::mysql::result& result::operator=(ramrod::mysql::result &result){
     close();
-    result_ = (sql::ResultSet*)result;
+    result_ = static_cast<sql::ResultSet*>(result);
     return *this;
   }
 
   ramrod::mysql::result* result::operator=(ramrod::mysql::result *result){
     close();
-    result_ = (sql::ResultSet*)result;
+    if(result == nullptr)
+      result_ = nullptr;
+    else
+      result_ = static_cast<sql::ResultSet*>(*result);
     return this;
   }
 

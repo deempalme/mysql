@@ -26,9 +26,12 @@ namespace ramrod::mysql {
       no_statement,
       param_count_error,
       param_count_match_error,
+      param_diff_type_error,
+      param_no_types,
       param_type_error,
       no_result,
-      result_count_match_error
+      result_count_match_error,
+      result_type_error
     };
   }
 } // namespace ramrod::mysql

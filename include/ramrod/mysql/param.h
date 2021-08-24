@@ -1,9 +1,7 @@
 #ifndef RAMROD_MYSQL_PARAM_H
 #define RAMROD_MYSQL_PARAM_H
 
-#include <cstdint>
-
-#include "ramrod/mysql/types.h"
+#include "ramrod/mysql/types.h"  // for types
 
 
 namespace ramrod::mysql {

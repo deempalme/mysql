@@ -1,7 +1,7 @@
 #ifndef RAMROD_MYSQL_RESULT_METADATA_H
 #define RAMROD_MYSQL_RESULT_METADATA_H
 
-#include <string>
+#include <string>  // for string
 
 namespace sql {
   class ResultSet;
