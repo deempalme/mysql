@@ -1,30 +1,33 @@
 #ifndef RAMROD_MYSQL_STATEMENT_H
 #define RAMROD_MYSQL_STATEMENT_H
 
-#include <cstdint>
-#include <string>
-#include <cppconn/resultset.h>
-#include <cppconn/prepared_statement.h>
+#include <cstdint>                     // for int64_t
+#include <iosfwd>                      // for size_t
+#include <string>                      // for string
+#include "ramrod/mysql/parameter.h"    // for parameter
+#include "ramrod/mysql/result_stmt.h"  // for result_stmt
 
-#include "ramrod/mysql/parameter.h"
-#include "ramrod/mysql/types.h"
+namespace sql {
+  class Connection;
+  class PreparedStatement;
+}
 
 
 namespace ramrod::mysql {
   class connection;
   class result;
 
-  class statement : public ramrod::mysql::parameter
+  class statement : public ramrod::mysql::parameter, public ramrod::mysql::result_stmt
   {
   public:
     statement(ramrod::mysql::connection *connection);
     statement(ramrod::mysql::connection *connection, const std::string &sql);
     ~statement();
 
-    std::uint64_t affected_rows();
+    std::size_t affected_rows();
 
-    template<typename ...T>
-    bool bind_result(T &...vars);
+    void after_last();
+    void before_first();
 
     bool close();
 
@@ -37,15 +40,28 @@ namespace ramrod::mysql {
 
     bool fetch();
 
+    bool first();
+
     bool free_result();
 
-    ramrod::mysql::result get_result();
+    ramrod::mysql::result &get_result();
 
     std::int64_t insert_id();
 
-    std::uint64_t num_rows();
+    bool is_after_last();
+    bool is_before_first();
+    bool is_first();
+    bool is_last();
+
+    bool last();
+
+    bool next();
+
+    std::size_t num_rows();
 
     bool prepare(const std::string &query);
+
+    bool previous();
 
     void reset();
 
@@ -54,10 +70,11 @@ namespace ramrod::mysql {
   private:
     sql::Connection *connection_;
     sql::PreparedStatement *statement_;
+    ramrod::mysql::result *result_;
 
-    std::uint64_t affected_rows_;
+    int affected_rows_;
     std::int64_t insert_id_;
-    std::uint64_t num_rows_;
+    std::size_t num_rows_;
   };
 } // namespace ramrod::mysql
 

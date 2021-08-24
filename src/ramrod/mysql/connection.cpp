@@ -1,17 +1,18 @@
 #include "ramrod/mysql/connection.h"
 
-#include <mysql_driver.h>
-#include <mysql_connection.h>
+#include <cppconn/sqlstring.h>       // for SQLString
+#include <mysql_driver.h>            // for get_driver_instance, MySQL_Driver
+#include <map>                       // for map<>::mapped_type
+#include "ramrod/mysql/result.h"     // for result
+#include "ramrod/mysql/statement.h"  // for statement
 
-#include "ramrod/mysql/statement.h"
-#include "ramrod/mysql/result.h"
-#include "ramrod/mysql/types.h"
 
 namespace ramrod::mysql {
   connection::connection() :
     driver_(sql::mysql::get_driver_instance()),
     connection_{nullptr},
-    options_()
+    options_(),
+    statement_{nullptr}
   {
     // TODO: set error if driver is not found
     //if(driver_ == nullptr)
@@ -32,6 +33,10 @@ namespace ramrod::mysql {
   }
 
   bool connection::close(){
+    if(statement_ != nullptr){
+      delete statement_;
+      statement_ = nullptr;
+    }
     if(connection_ == nullptr) return false;
     delete connection_;
     connection_ = nullptr;
@@ -109,13 +114,14 @@ namespace ramrod::mysql {
   }
 
   ramrod::mysql::statement connection::prepare(const std::string &sql){
-    ramrod::mysql::statement stmt(this);
-    stmt.prepare(sql);
-    return stmt;
+    return ramrod::mysql::statement(this, sql);
   }
 
   ramrod::mysql::result connection::query(const std::string &query){
-
+    if(connection_ == nullptr) return ramrod::mysql::result();
+    if(statement_ != nullptr) delete statement_;
+    statement_ = new ramrod::mysql::statement(this);
+    return statement_->execute_query(query);
   }
 
   bool connection::read_only(){

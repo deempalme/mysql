@@ -1,9 +1,7 @@
 #ifndef RAMROD_MYSQL_PARAM_H
 #define RAMROD_MYSQL_PARAM_H
 
-#include <cstdint>
-
-#include "ramrod/mysql/types.h"
+#include "ramrod/mysql/types.h"  // for types
 
 
 namespace ramrod::mysql {
@@ -11,7 +9,9 @@ namespace ramrod::mysql {
   {
   public:
     param(const ramrod::mysql::types type, void *variable);
-    ~param();
+
+    ramrod::mysql::types type() const;
+    void *value() const;
 
   private:
     ramrod::mysql::types type_;

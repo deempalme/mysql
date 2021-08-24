@@ -1,16 +1,19 @@
 #include "ramrod/mysql/result.h"
 
-#include <mysql_connection.h>
-#include <cppconn/resultset.h>
+#include <cppconn/resultset.h>  // for ResultSet
+#include <cppconn/sqlstring.h>  // for SQLString
 
-#include "ramrod/mysql/connection.h"
 
 namespace ramrod::mysql {
-  result::result(ramrod::mysql::connection *connection) :
-    connection_{nullptr}
-  {
-    if(connection != nullptr) connection_ = (sql::Connection*)connection;
-  }
+  result::result() :
+    result_{nullptr},
+    metadata_()
+  {}
+
+  result::result(sql::ResultSet *result) :
+    result_{result},
+    metadata_(result)
+  {}
 
   result::~result(){
     close();
@@ -28,13 +31,16 @@ namespace ramrod::mysql {
 
   bool result::close(){
     if(result_ == nullptr) return false;
-    delete result_;
+    metadata_(nullptr);
+    // TODO: delete required?
+//    delete result_;
     result_ = nullptr;
     return true;
   }
 
-  bool result::fetch(){
-    return next();
+  std::uint32_t result::find_column(const std::string &label){
+    if(result_ == nullptr) return 0;
+    return result_->findColumn(label);
   }
 
   bool result::first(){
@@ -43,17 +49,10 @@ namespace ramrod::mysql {
   }
 
   bool result::free(){
-    // TODO: is this right?
-    if(result_ == nullptr) return false;
-    result_->close();
-    return true;
+    return close();
   }
 
-  bool result::free_result(){
-    return free();
-  }
-
-  std::istream *result::get_blob(std::uint32_t index) const {
+  std::istream *result::get_blob(const std::uint32_t index) const {
     if(result_ == nullptr) return nullptr;
     return result_->getBlob(index);
   }
@@ -63,7 +62,7 @@ namespace ramrod::mysql {
     return result_->getBlob(label);
   }
 
-  bool result::get_bool(std::uint32_t index) const {
+  bool result::get_bool(const std::uint32_t index) const {
     if(result_ == nullptr) return false;
     return result_->getBoolean(index);
   }
@@ -73,7 +72,7 @@ namespace ramrod::mysql {
     return result_->getBoolean(label);
   }
 
-  long double result::get_double(std::uint32_t index) const {
+  long double result::get_double(const std::uint32_t index) const {
     if(result_ == nullptr) return 0;
     return result_->getDouble(index);
   }
@@ -83,7 +82,12 @@ namespace ramrod::mysql {
     return result_->getDouble(label);
   }
 
-  std::int32_t result::get_int(std::uint32_t index) const {
+  std::size_t result::get_fetch_size(){
+    if(result_ == nullptr) return 0;
+    return result_->getFetchSize();
+  }
+
+  std::int32_t result::get_int(const std::uint32_t index) const {
     if(result_ == nullptr) return 0;
     return result_->getInt(index);
   }
@@ -93,7 +97,7 @@ namespace ramrod::mysql {
     return result_->getInt(label);
   }
 
-  std::int64_t result::get_int64(std::uint32_t index) const {
+  std::int64_t result::get_int64(const std::uint32_t index) const {
     if(result_ == nullptr) return 0;
     return result_->getInt64(index);
   }
@@ -103,7 +107,11 @@ namespace ramrod::mysql {
     return result_->getInt64(label);
   }
 
-  std::uint32_t result::get_uint(std::uint32_t index) const {
+  ramrod::mysql::result_metadata &result::get_metadata(){
+    return metadata_;
+  }
+
+  std::uint32_t result::get_uint(const std::uint32_t index) const {
     if(result_ == nullptr) return 0;
     return result_->getUInt(index);
   }
@@ -113,7 +121,7 @@ namespace ramrod::mysql {
     return result_->getUInt(label);
   }
 
-  std::uint64_t result::get_uint64(std::uint32_t index) const {
+  std::uint64_t result::get_uint64(const std::uint32_t index) const {
     if(result_ == nullptr) return 0;
     return result_->getUInt64(index);
   }
@@ -123,7 +131,12 @@ namespace ramrod::mysql {
     return result_->getUInt64(label);
   }
 
-  std::string result::get_string(std::uint32_t index) const {
+  std::size_t result::get_row(){
+    if(result_ == nullptr) return 0;
+    return result_->getRow();
+  }
+
+  std::string result::get_string(const std::uint32_t index) const {
     if(result_ == nullptr) return std::string();
     return result_->getString(index);
   }
@@ -131,6 +144,41 @@ namespace ramrod::mysql {
   std::string result::get_string(const std::string &label) const {
     if(result_ == nullptr) return std::string();
     return result_->getString(label);
+  }
+
+  bool result::is_after_last(){
+    if(result_ == nullptr) return false;
+    return result_->isAfterLast();
+  }
+
+  bool result::is_before_first(){
+    if(result_ == nullptr) return false;
+    return result_->isBeforeFirst();
+  }
+
+  bool result::is_closed(){
+    if(result_ == nullptr) return false;
+    return result_->isClosed();
+  }
+
+  bool result::is_first(){
+    if(result_ == nullptr) return false;
+    return result_->isFirst();
+  }
+
+  bool result::is_last(){
+    if(result_ == nullptr) return false;
+    return result_->isLast();
+  }
+
+  bool result::is_null(const std::uint32_t index){
+    if(result_ == nullptr) return false;
+    return result_->isNull(index);
+  }
+
+  bool result::is_null(const std::string &label){
+    if(result_ == nullptr) return false;
+    return result_->isNull(label);
   }
 
   bool result::last(){
@@ -144,7 +192,7 @@ namespace ramrod::mysql {
   }
 
   std::size_t result::num_rows(){
-    return row_count();
+    return rows_count();
   }
 
   bool result::previous(){
@@ -152,7 +200,12 @@ namespace ramrod::mysql {
     return result_->previous();
   }
 
-  std::size_t result::row_count(){
+  void result::refresh_row(){
+    if(result_ == nullptr) return;
+    result_->refreshRow();
+  }
+
+  std::size_t result::rows_count(){
     if(result_ == nullptr) return 0;
     return result_->rowsCount();
   }
@@ -170,6 +223,42 @@ namespace ramrod::mysql {
   bool result::row_updated(){
     if(result_ == nullptr) return false;
     return result_->rowUpdated();
+  }
+
+  bool result::was_null(){
+    if(result_ == nullptr) return false;
+    return result_->wasNull();
+  }
+
+  ramrod::mysql::result& result::operator()(sql::ResultSet *result){
+    close();
+    result_ = result;
+    return *this;
+  }
+
+  ramrod::mysql::result& result::operator=(sql::ResultSet *result){
+    close();
+    result_ = result;
+    return *this;
+  }
+
+  ramrod::mysql::result& result::operator=(ramrod::mysql::result &result){
+    close();
+    result_ = static_cast<sql::ResultSet*>(result);
+    return *this;
+  }
+
+  ramrod::mysql::result* result::operator=(ramrod::mysql::result *result){
+    close();
+    if(result == nullptr)
+      result_ = nullptr;
+    else
+      result_ = static_cast<sql::ResultSet*>(*result);
+    return this;
+  }
+
+  ramrod::mysql::result::operator sql::ResultSet*(){
+    return result_;
   }
 
 } // namespace ramrod::mysql
