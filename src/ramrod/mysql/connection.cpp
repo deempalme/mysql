@@ -11,7 +11,8 @@ namespace ramrod::mysql {
   connection::connection() :
     driver_(sql::mysql::get_driver_instance()),
     connection_{nullptr},
-    options_()
+    options_(),
+    statement_{nullptr}
   {
     // TODO: set error if driver is not found
     //if(driver_ == nullptr)
@@ -32,6 +33,10 @@ namespace ramrod::mysql {
   }
 
   bool connection::close(){
+    if(statement_ != nullptr){
+      delete statement_;
+      statement_ = nullptr;
+    }
     if(connection_ == nullptr) return false;
     delete connection_;
     connection_ = nullptr;
@@ -109,13 +114,14 @@ namespace ramrod::mysql {
   }
 
   ramrod::mysql::statement connection::prepare(const std::string &sql){
-    ramrod::mysql::statement stmt(this);
-    stmt.prepare(sql);
-    return stmt;
+    return ramrod::mysql::statement(this, sql);
   }
 
   ramrod::mysql::result connection::query(const std::string &query){
-
+    if(connection_ == nullptr) return ramrod::mysql::result();
+    if(statement_ != nullptr) delete statement_;
+    statement_ = new ramrod::mysql::statement(this);
+    return statement_->execute_query(query);
   }
 
   bool connection::read_only(){

@@ -10,6 +10,7 @@
 namespace ramrod::mysql {
   parameter::parameter(ramrod::mysql::statement *statement) :
     statement_{nullptr},
+    parameters_{nullptr},
     param_result_{false},
     param_in_{false},
     param_types_(),
@@ -44,6 +45,10 @@ namespace ramrod::mysql {
     param_types_.clear();
     param_counter_ = 0;
     param_vars_.clear();
+  }
+
+  unsigned int parameter::param_count(){
+    return param_counter_;
   }
 
   parameter &parameter::set_big_int(const unsigned int index, const std::string &value){

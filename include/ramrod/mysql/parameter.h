@@ -11,7 +11,10 @@
 #include "ramrod/mysql/param.h"
 #include "ramrod/mysql/types.h"
 
-namespace sql { class PreparedStatement; }
+namespace sql {
+  class ParameterMetaData;
+  class PreparedStatement;
+}
 
 
 namespace ramrod::mysql {
@@ -42,6 +45,8 @@ namespace ramrod::mysql {
     bool bind_param(const std::string &types, T &...vars);
 
     void clear_parameters();
+
+    unsigned int param_count();
 
     parameter &set_big_int(const unsigned int index, const std::string &value);
     parameter &set_datetime(const unsigned int index, const std::string &value);
@@ -78,6 +83,7 @@ namespace ramrod::mysql {
     bool param_set(const unsigned int index);
 
     sql::PreparedStatement *statement_;
+    sql::ParameterMetaData *parameters_;
 
     bool param_result_, param_in_;
     std::string param_types_;

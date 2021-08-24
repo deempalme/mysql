@@ -38,17 +38,23 @@ more at: [https://dev.mysql.com/doc/connector-cpp/8.0/en/](https://dev.mysql.com
 
 ### Getting the version of your `Boost` library
 
-Simply run any CMakeLists that has boost's libraries in it and it will give oyu the current version and folder path in your system:
+Simply run any CMakeLists.txt that has boost's libraries in it and it will give you the current version and folder path in your system:
 
 ```cmake
--- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.71.0/BoostConfig.cmake (found version "1.71.0") found components: system chrono filesystem thread
+# Put the following line in your CMakeLists.txt
+find_package(Boost REQUIRED)
+# and should give you something like this output:
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.71.0/BoostConfig.cmake (found version "1.71.0")
 ```
 
 ### Getting the version of your SSL library
 
-You can also run any CMakeLists that has OpenSSL's libraries in it and it will give oyu the current version and folder path in your system:
+You can also run any CMakeLists.txt that has OpenSSL's libraries in it and it will give you the current version and folder path in your system:
 
 ```cmake
+# Put the following line in your CMakeLists.txt
+find_package(OpenSSL REQUIRED)
+# and should give you something like this output:
 -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "1.1.1f") 
 ```
 

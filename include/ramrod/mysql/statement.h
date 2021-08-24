@@ -13,6 +13,7 @@
 namespace ramrod::mysql {
   class connection;
   class result;
+  class result_metadata;
 
   class statement : public ramrod::mysql::parameter
   {
@@ -22,9 +23,6 @@ namespace ramrod::mysql {
     ~statement();
 
     std::uint64_t affected_rows();
-
-    template<typename ...T>
-    bool bind_result(T &...vars);
 
     bool close();
 
@@ -39,11 +37,11 @@ namespace ramrod::mysql {
 
     bool free_result();
 
-    ramrod::mysql::result get_result();
+    ramrod::mysql::result &get_result();
 
     std::int64_t insert_id();
 
-    std::uint64_t num_rows();
+    std::size_t num_rows();
 
     bool prepare(const std::string &query);
 
@@ -54,10 +52,13 @@ namespace ramrod::mysql {
   private:
     sql::Connection *connection_;
     sql::PreparedStatement *statement_;
+    ramrod::mysql::result *result_;
+    ramrod::mysql::result_metadata *metadata_;
 
     std::uint64_t affected_rows_;
     std::int64_t insert_id_;
-    std::uint64_t num_rows_;
+    std::size_t num_rows_;
+    std::size_t field_count_;
   };
 } // namespace ramrod::mysql
 

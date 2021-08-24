@@ -242,6 +242,8 @@ namespace ramrod::mysql {
     sql::mysql::MySQL_Driver *driver_;
     sql::Connection *connection_;
     sql::ConnectOptionsMap options_;
+
+    ramrod::mysql::statement *statement_;
   };
 } // namespace ramrod::mysql
 
