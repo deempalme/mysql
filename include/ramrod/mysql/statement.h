@@ -30,16 +30,63 @@ namespace ramrod::mysql {
     void before_first();
 
     bool close();
-
+    /**
+     * @brief Executes a prepared statement
+     *
+     * Executes previously prepared statement. The statement must be successfully prepared
+     * prior to execution, using either the prepare() function, or by passing the second
+     * argument to mysql::statement().
+     *
+     * If the statement is UPDATE, DELETE, or INSERT, the total number of affected rows
+     * can be determined by using the affected_rows() function. Likewise, if the query
+     * yields a result set the fetch() function is used.
+     *
+     * All the previous binded results introduced in bind_result() will be removed.
+     *
+     * @return `true` on success or `false` on failure.
+     */
     bool execute();
+    /**
+     * @brief Executes a new query
+     *
+     * Executes a new query, all the binded parameters and results are removed.
+     *
+     * If the statement is UPDATE, DELETE, or INSERT, the total number of affected rows
+     * can be determined by using the affected_rows() function. Likewise, if the query
+     * yields a result set the fetch() function is used.
+     *
+     * @return `true` on success or `false` on failure.
+     */
     bool execute(const std::string &query);
-    // TODO:
+    /**
+     * @brief Executes a separated query
+     *
+     * Executes a separated query from the statement, the result is returned,
+     * see ramrod::mysql::result for more information.
+     *
+     * @return a mysql::result
+     */
     ramrod::mysql::result execute_query(const std::string &query);
     int execute_update();
     int execute_update(const std::string &query);
-
+    /**
+     * @brief Fetch results from a prepared statement into the bound variables
+     *
+     * Fetch the result from a prepared statement into the variables bound by bind_result().
+     *
+     *   Note:
+     *   Note that all columns must be bound by the application before calling fetch().
+     *
+     * @return `true` in success. Data has been fetched, `false` if there are no more
+     *          rows or an error happened
+     */
     bool fetch();
-
+    /**
+     * @brief Fetches the first row from the prepared statement
+     *
+     * @return `true` if success. Data has been fetched, `false` if there is no rows or
+     *          an error happened
+     */
     bool first();
 
     bool free_result();
