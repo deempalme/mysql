@@ -4,7 +4,10 @@
 #include <cppconn/connection.h>  // for Connection (ptr only), ConnectOption...
 #include <string>                // for string, allocator
 
-namespace sql::mysql { class MySQL_Driver; }
+namespace sql::mysql {
+  class MySQL_Driver;
+  class MySQL_Connection;
+}
 
 namespace ramrod::mysql {
   class result;
@@ -129,6 +132,14 @@ namespace ramrod::mysql {
      */
     ramrod::mysql::statement create_statement();
     /**
+     * @brief Escapes special characters reserved for mysql
+     *
+     * @param string String containing characters that may be placed directly into a SQL
+     *
+     * @return A string will all special characters escaped
+     */
+    std::string escape_string(const std::string &string);
+    /**
      * @brief Alias of create_statement()
      */
     ramrod::mysql::statement init_statement();
@@ -236,7 +247,7 @@ namespace ramrod::mysql {
 
   private:
     sql::mysql::MySQL_Driver *driver_;
-    sql::Connection *connection_;
+    sql::mysql::MySQL_Connection *connection_;
     sql::ConnectOptionsMap options_;
 
     ramrod::mysql::statement *statement_;

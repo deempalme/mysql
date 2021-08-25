@@ -2,6 +2,7 @@
 
 #include <cppconn/sqlstring.h>       // for SQLString
 #include <mysql_driver.h>            // for get_driver_instance, MySQL_Driver
+#include <mysql_connection.h>        // for escapeString
 #include <map>                       // for map<>::mapped_type
 #include "ramrod/mysql/result.h"     // for result
 #include "ramrod/mysql/statement.h"  // for statement
@@ -94,7 +95,7 @@ namespace ramrod::mysql {
     else
       options_.erase("schema");
 
-    connection_ = driver_->connect(options_);
+    connection_ = dynamic_cast<sql::mysql::MySQL_Connection*>(driver_->connect(options_));
 
     return connection_ != nullptr && connection_->isValid();
   }
@@ -102,6 +103,11 @@ namespace ramrod::mysql {
   ramrod::mysql::statement connection::create_statement(){
     if(connection_ == nullptr) return nullptr;
     return ramrod::mysql::statement(this);
+  }
+
+  std::string connection::escape_string(const std::string &string){
+    if(connection_ == nullptr) return std::string();
+    return connection_->escapeString(string);
   }
 
   ramrod::mysql::statement connection::init_statement(){
@@ -138,7 +144,7 @@ namespace ramrod::mysql {
   bool connection::reconnect(){
     if(connection_ == nullptr) return false;
     close();
-    connection_ = driver_->connect(options_);
+    connection_ = dynamic_cast<sql::mysql::MySQL_Connection*>(driver_->connect(options_));
     return connection_ != nullptr && connection_->isValid();
   }
 
