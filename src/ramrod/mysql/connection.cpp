@@ -101,7 +101,6 @@ namespace ramrod::mysql {
   }
 
   ramrod::mysql::statement connection::create_statement(){
-    if(connection_ == nullptr) return nullptr;
     return ramrod::mysql::statement(this);
   }
 

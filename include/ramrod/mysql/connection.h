@@ -18,7 +18,7 @@ namespace ramrod::mysql {
   public:
     connection();
     /**
-     * @brief Open a new connection to the MySQL server
+     * @brief Open a new connection to MySQL server
      *
      * Check if the connection is valid and active by using is_valid()
      *
@@ -49,7 +49,8 @@ namespace ramrod::mysql {
                const std::string &username,
                const std::string &password = "",
                const std::string &database = "",
-               const int port = -1, const std::string &socket = "");
+               const int port = -1,
+               const std::string &socket = "");
     /**
       * @brief Closes the connection and frees used memory
       */
@@ -93,7 +94,7 @@ namespace ramrod::mysql {
      */
     bool charset(const std::string &charset, const bool reconnect = false);
     /**
-     * @brief Open a new connection to the MySQL server
+     * @brief Open a new connection to MySQL server
      *
      * @param hostname Can be either a host name or an IP address. The local host is assumed
      *                 when passing the null value or the string "localhost" to this
@@ -124,11 +125,12 @@ namespace ramrod::mysql {
                  const std::string &username,
                  const std::string &password = "",
                  const std::string &database = "",
-                 const int port = -1, const std::string &socket = "");
+                 const int port = -1,
+                 const std::string &socket = "");
     /**
      * @brief  Initializes a statement and returns an object
      *
-     * @return An statement object or `nullptr` if the connection is closed or error with driver
+     * @return An statement object
      */
     ramrod::mysql::statement create_statement();
     /**
