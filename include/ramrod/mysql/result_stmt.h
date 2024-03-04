@@ -1,7 +1,7 @@
 #ifndef RAMROD_MYSQL_RESULT_STMT_H
 #define RAMROD_MYSQL_RESULT_STMT_H
 
-#include <stdint.h>              // for int32_t, int64_t, uint32_t, uint64_t
+#include <cstdint>               // for int32_t, int64_t, uint32_t, uint64_t
 #include <iosfwd>                // for istream
 #include <map>                   // for map
 #include <string>                // for string
@@ -74,7 +74,7 @@ namespace ramrod::mysql {
 
     void bind_single_result();
     void bind_single_result(bool &value);
-    void bind_single_result(long double &value);
+    void bind_single_result(double &value);
     void bind_single_result(float &value);
     void bind_single_result(std::int32_t &value);
     void bind_single_result(std::int64_t &value);

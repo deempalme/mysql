@@ -71,7 +71,7 @@ namespace ramrod::mysql {
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::boolean, (void*)&value));
   }
 
-  void result_stmt::bind_single_result(long double &value){
+  void result_stmt::bind_single_result(double &value){
     if(exit_result()) return;
     result_vars_.emplace(++result_counter_, mysql::param(mysql::types::double64, (void*)&value));
   }
